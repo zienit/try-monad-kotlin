@@ -18,18 +18,14 @@ sealed class Try<T> {
     abstract fun <E : Throwable> recoverWith(clazz: KClass<E>, mapper: (E) -> Try<T>): Try<T>
 
     companion object {
-        private inline fun <U> eval(lambda: () -> Try<U>): Try<U> {
+        private inline fun <U> eval(lambda: () -> Try<U>): Try<U> =
             try {
-                return lambda()
+                lambda()
             } catch (e: Throwable) {
-                return failure(e)
+                e.failure()
             }
-        }
 
-        fun <U> success(value: U): Try<U> = Success(value)
-        fun success(): Try<Nothing?> = Success(null)
-        fun <U> failure(exception: Throwable): Try<U> = Failure(exception)
-        fun <U> of(lambda: () -> U): Try<U> = eval { success(lambda()) }
+        fun <U> of(lambda: () -> U): Try<U> = eval { lambda().success() }
     }
 
     class Success<T>(val value: T) : Try<T>() {
@@ -38,10 +34,10 @@ sealed class Try<T> {
         override fun isFailure(): Boolean = false
         override fun get(): T = value
         override fun getException(): Throwable = throw IllegalStateException()
-        override fun <U> map(mapper: (T) -> U): Try<U> = eval { success(mapper(value)) }
+        override fun <U> map(mapper: (T) -> U): Try<U> = eval { Success(mapper(value)) }
         override fun <U> flatMap(mapper: (T) -> Try<out U>): Try<U> = eval { mapper(value) as Try<U> }
         override fun filter(predicate: (T) -> Boolean): Try<T> =
-            eval { if (predicate(value)) this else failure<T>(NoSuchElementException()) }
+            eval { if (predicate(value)) this else Failure<T>(NoSuchElementException()) }
 
         override fun recover(mapper: (Throwable) -> T): Try<T> = this
         override fun <E : Throwable> recover(clazz: KClass<E>, mapper: (E) -> T): Try<T> = this
@@ -58,9 +54,9 @@ sealed class Try<T> {
         override fun <U> map(mapper: (T) -> U): Try<U> = this as Try<U>
         override fun <U> flatMap(mapper: (T) -> Try<out U>): Try<U> = this as Try<U>
         override fun filter(predicate: (T) -> Boolean): Try<T> = this
-        override fun recover(mapper: (Throwable) -> T): Try<T> = eval { Try.success(mapper(ex)) }
+        override fun recover(mapper: (Throwable) -> T): Try<T> = eval { Success(mapper(ex)) }
         override fun <E : Throwable> recover(clazz: KClass<E>, mapper: (E) -> T): Try<T> =
-            eval { if (clazz.isSuperclassOf(ex::class)) Try.success(mapper(ex as E)) else this }
+            eval { if (clazz.isSuperclassOf(ex::class)) Success(mapper(ex as E)) else this }
 
         override fun recoverWith(mapper: (Throwable) -> Try<T>): Try<T> = eval { mapper(ex) }
         override fun <E : Throwable> recoverWith(clazz: KClass<E>, mapper: (E) -> Try<T>): Try<T> =
@@ -68,8 +64,8 @@ sealed class Try<T> {
     }
 }
 
-fun <T> T.success() = Try.success(this)
-fun <E : Throwable, T> E.failure() = Try.failure<T>(this)
+fun <T> T.success(): Try<T> = Try.Success(this)
+fun <T> Throwable.failure(): Try<T> = Try.Failure<T>(this)
 
 fun <T> Sequence<Try<T>>.toTryList(): Try<List<T>> {
     return toCollection(this.asIterable(), mutableListOf<T>()) as Try<List<T>>

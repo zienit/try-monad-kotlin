@@ -1,9 +1,9 @@
 package nl.zienit.functional
 
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.hasItems
+import org.hamcrest.CoreMatchers.*
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
+import java.lang.RuntimeException
 import java.sql.SQLException
 
 data class ProgrammingLanguage(val name: String, val creator: String, val predecessor: String?)
@@ -34,7 +34,9 @@ class ExampleTest {
         val foobar = findLanguage("Foobar")
 
         assertThat(kotlin.isSuccess(), equalTo(true))
+        assertThat(kotlin.get().name, equalTo("Kotlin"))
         assertThat(foobar.isSuccess(), equalTo(false))
+        assertThat(foobar.getException(), instanceOf(NoSuchElementException::class.java))
     }
 
     @Test
@@ -99,7 +101,7 @@ class ExampleTest {
 
         val listLanguages = makeLanguageLister(reliable = true)
 
-        val creators = listLanguages()
+        val creators : Try<List<String>> = listLanguages()
             .flatMap { names ->
                 names
                     .map { name ->

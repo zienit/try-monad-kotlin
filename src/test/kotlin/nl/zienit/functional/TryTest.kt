@@ -1,7 +1,6 @@
 package nl.zienit.functional
 
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.instanceOf
+import org.hamcrest.CoreMatchers.*
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
 
@@ -13,19 +12,20 @@ class TryTest {
 
     @Test
     fun testSuccess() {
-        val t = Try.success(1)
+        val t = 1.success()
         assertThat(t.get(), equalTo(1))
     }
 
     @Test
     fun testSuccessNothing() {
-        val t = Try.success()
+        val t = null.success()
         assertThat(t.get(), equalTo(null))
     }
 
     @Test
     fun testFailure() {
-        val f = Try.failure<Int>(IllegalArgumentException())
+        val f = IllegalArgumentException().failure<Int>()
+        assertThat(f.getException(), instanceOf(IllegalArgumentException::class.java))
     }
 
     @Test
@@ -45,7 +45,7 @@ class TryTest {
 
     @Test
     fun testWhen() {
-        val t = Try.success(1)
+        val t = 1.success()
 
         val u = when (t) {
             is Try.Success -> t.get()
@@ -57,7 +57,7 @@ class TryTest {
 
     @Test
     fun testWhenFailure() {
-        val t = Try.failure<Int>(java.lang.IllegalArgumentException())
+        val t = IllegalArgumentException().failure<Int>()
 
         val u = when (t) {
             is Try.Success -> t.get()
@@ -72,7 +72,7 @@ class TryTest {
 
         val mapper: (A) -> C = { a -> C(a.x) }
 
-        val t: Try<B> = Try.success(B(1))
+        val t: Try<B> = B(1).success()
         val u: Try<A> = t.map(mapper)
 
         assertThat(u.get().x, equalTo(1))
@@ -81,7 +81,7 @@ class TryTest {
     @Test
     fun testOfMapFailure() {
 
-        val t = Try.failure<Int>(IllegalArgumentException())
+        val t = IllegalArgumentException().failure<Int>()
         val u = t.map { it }
 
         assertThat(u.getException(), instanceOf(IllegalArgumentException::class.java))
@@ -90,7 +90,7 @@ class TryTest {
     @Test
     fun testOfMapThrows() {
 
-        val t = Try.success(1)
+        val t = success()
         val u = t.map { throw IllegalArgumentException() }
 
         assertThat(u.getException(), instanceOf(IllegalArgumentException::class.java))
@@ -99,9 +99,9 @@ class TryTest {
     @Test
     fun testOfFlatMap() {
 
-        val mapper: (A) -> Try<C> = { a -> Try.success(C(a.x)) }
+        val mapper: (A) -> Try<C> = { a -> C(a.x).success() }
 
-        val t: Try<B> = Try.success(B(1))
+        val t: Try<B> = B(1).success()
         val u: Try<A> = t.flatMap(mapper)
 
         assertThat(u.get().x, equalTo(1))
@@ -110,7 +110,7 @@ class TryTest {
     @Test
     fun testOfFilter() {
 
-        val t: Try<B> = Try.success(B(1))
+        val t: Try<B> = B(1).success()
         val filter: (A) -> Boolean = { true }
 
         val u: Try<B> = t.filter(filter)
@@ -121,7 +121,7 @@ class TryTest {
     @Test
     fun testOfRecover() {
 
-        val t: Try<B> = Try.failure(NoSuchElementException())
+        val t: Try<B> = NoSuchElementException().failure()
         val u = t.recover { C(2) }
 
         assertThat(u.get().x, equalTo(2))
@@ -130,7 +130,7 @@ class TryTest {
     @Test
     fun testOfRecoverClass() {
 
-        val t: Try<B> = Try.failure(NullPointerException("foo"))
+        val t: Try<B> = NullPointerException("foo").failure()
         val u = t.recover(RuntimeException::class) { e -> C(e.message?.length ?: 0) }
 
         assertThat(u.get().x, equalTo(3))
@@ -139,8 +139,8 @@ class TryTest {
     @Test
     fun testOfRecoverWith() {
 
-        val t: Try<B> = Try.failure(NoSuchElementException())
-        val u = t.recoverWith { Try.success(C(2)) }
+        val t: Try<B> = NoSuchElementException().failure()
+        val u = t.recoverWith { C(2).success() }
 
         assertThat(u.get().x, equalTo(2))
     }
@@ -148,12 +148,9 @@ class TryTest {
     @Test
     fun testOfRecoverWithClass() {
 
-        val t: Try<B> = Try.failure(NullPointerException("foo"))
-        val u = t.recoverWith(RuntimeException::class) { e -> Try.success(C(e.message?.length ?: 0)) }
+        val t: Try<B> = NullPointerException("foo").failure()
+        val u = t.recoverWith(RuntimeException::class) { e -> C(e.message?.length ?: 0).success() }
 
         assertThat(u.get().x, equalTo(3))
     }
-
-
-
 }
