@@ -38,7 +38,7 @@ fun findLanguage(query: String): Try<ProgrammingLanguage> = databaseOfLanguages
 
 Inside the function some specific things happen. 
 If a programming language is found, it is wrapped inside an instance of (inner) class Try.Success.
-The convenience extension .succes() does just that. If we do not find a language, we create an instance of NoSuchElementException and wrap it inside an instance of Try.Failure.
+The convenience extension function .succes() does just that. If we do not find a language, we create an instance of NoSuchElementException and wrap it inside an instance of Try.Failure.
 
 Lets write a little test for findLanguage:
 
@@ -89,7 +89,7 @@ fun testListLanguages() {
 ```
 
 Here is another version of the last example. This time we have an unreliable lister. 
-Because the Try is a failure, when .get() is invoked, instead of providing a value which it doesn't have, it throws the exception is holds instead.
+Because the Try is a failure, when .get() is invoked, instead of providing a value which it doesn't have, it throws the exception it holds instead.
 
 ```
 @Test(expected = SQLException::class)
@@ -146,15 +146,15 @@ fun testFindPredecessorOfKotlin() {
 }
 ```
 
-The last example is a bit more involved, because it uses both the Try and the List monad together. 
+The final example is a bit more involved, because it uses both the Try and the List monad together. 
 Lets go through the example line by line:
 The call to listLanguage returns a `Try<List<ProgrammingLanguage>>`. 
 This is fed into a .flatMap() because the lambda function will yield a Try, as we will see. 
-The lambda is fed with a `<List<ProgrammingLanguage>` as extraced from the Try. 
+The lambda is fed with a `<List<ProgrammingLanguage>>` as extraced from the Try. 
 The entries in the list are all mapped to a `Try<ProgrammingLanguage>` 
 and immediately after that the Try is mapped to a `Try<String>`. 
 So, we now have a list of tries, which is not very useful in most situations. 
-Fortunately, there is an extension that turns a list of tries into a try of a list, which is exactly what we need.
+Fortunately, there is an extension function `<List<Try<T>>.toTryList()` provided that turns a list of tries into a try of a list, which is exactly what we need.
 
 ```
 @Test
