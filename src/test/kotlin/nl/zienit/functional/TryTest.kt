@@ -153,4 +153,16 @@ class TryTest {
 
         assertThat(u.get().x, equalTo(3))
     }
+
+    @Test
+    fun testGetOrElse() {
+        val t: Try<B> = NullPointerException("foo").failure()
+        assertThat(t.getOrElse(B(12)).x, equalTo(12))
+    }
+
+    @Test
+    fun testGetOrNull() {
+        val t: Try<B> = NullPointerException("foo").failure()
+        assertThat(t.getOrNull(), equalTo<B?>(null))
+    }
 }

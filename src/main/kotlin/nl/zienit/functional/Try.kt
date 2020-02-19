@@ -9,6 +9,8 @@ sealed class Try<T> {
     abstract fun isFailure(): Boolean
     abstract fun get(): T
     abstract fun getException(): Throwable
+    fun getOrElse(other: T): T = if(this.isSuccess()) this.get() else other
+    fun getOrNull(): T? = if(this.isSuccess()) this.get() else null
     abstract fun <U> map(mapper: (T) -> U): Try<U>
     abstract fun <U> flatMap(mapper: (T) -> Try<out U>): Try<U>
     abstract fun filter(predicate: (T) -> Boolean): Try<T>
